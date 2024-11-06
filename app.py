@@ -34,3 +34,27 @@ def register():
  #     return jsonify({'message': 'User registered successfully! Please check your email to confirm.'}), 201
 
 @app.route('/confirm_email/<token>', methods=['GET'])
+def confirm_email(token):
+    try:
+        email = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])['email']
+        user = User.query.filter_by(email=email).first()
+        if user:
+            return jsonify({'message': 'Email confirmed!'}), 200
+        return jsonify({'message': 'User not found!'}), 404
+    except jwt.ExpiredSignatureError:
+        return jsonify({'message': 'Token expired!'}), 400
+    except jwt.InvalidTokenError:
+        return jsonify({'message': 'Invalid token!'}), 400
+
+@app.route('/set_reminder', methods=['POST'])
+def set_reminder():
+    data = request.json
+    user = User.query.filter_by(email=data['email']).first()
+    if user:
+        new_reminder = Reminder(time=data['time'], user=user)
+        db.session.add(new_reminder)
+        db.session.commit()
+        return jsonify({'message': 'Reminder set successfully!'}), 201
+    return jsonify({'message': 'User not found!'}), 404
+
+@app.route('/view_reminders/<email>', methods=['GET'])
