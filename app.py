@@ -58,3 +58,20 @@ def set_reminder():
     return jsonify({'message': 'User not found!'}), 404
 
 @app.route('/view_reminders/<email>', methods=['GET'])
+def view_reminders(email):
+    user = User.query.filter_by(email=email).first()
+    if user:
+        reminders = Reminder.query.filter_by(user_id=user.id).all()
+        return jsonify([{'id': r.id, 'time': r.time} for r in reminders]), 200
+    return jsonify({'message': 'User not found!'}), 404
+
+@app.route('/delete_reminder/<int:reminder_id>', methods=['DELETE'])
+def delete_reminder(reminder_id):
+    reminder = Reminder.query.get(reminder_id)
+    if reminder:
+        db.session.delete(reminder)
+        db.session.commit()
+        return jsonify({'message': 'Reminder deleted successfully!'}), 200
+    return jsonify({'message': 'Reminder not found!'}), 404
+
+@app.route('/update_reminder/<int:reminder_id>', methods=['PUT'])
